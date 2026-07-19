@@ -1,0 +1,440 @@
+/* =============================================================
+   Landing Page Styles (bSafe Clone Blueprint)
+   Scoped to .landing-page to avoid bleeding into tactical UI
+============================================================= */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap');
+
+.landing-page {
+  font-family: 'Inter', -apple-system, sans-serif;
+  color: #475569; /* Slate Gray for body */
+  background: #FFFFFF;
+  line-height: 1.6;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+/* Typography */
+.landing-page h1, 
+.landing-page h2, 
+.landing-page h3 {
+  color: #1E293B; /* Dark Slate */
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-top: 0;
+}
+
+.landing-page h1 {
+  font-size: 3.5rem;
+  line-height: 1.1;
+  margin-bottom: 24px;
+}
+
+.landing-page h2 {
+  font-size: 2.5rem;
+  margin-bottom: 16px;
+}
+
+/* Layout Classes */
+.lp-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.lp-section {
+  padding: 80px 0;
+}
+
+.lp-section-alt {
+  background: #F8F9FA;
+}
+
+/* Buttons */
+.lp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 28px;
+  font-weight: 600;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+  font-size: 1rem;
+}
+
+.lp-btn-primary {
+  background: #2563EB; /* Deep Blue */
+  color: #FFFFFF;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+}
+
+.lp-btn-primary:hover {
+  background: #1D4ED8;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+}
+
+.lp-btn-outline {
+  background: transparent;
+  color: #2563EB;
+  border: 2px solid #2563EB;
+}
+
+.lp-btn-outline:hover {
+  background: rgba(37, 99, 235, 0.05);
+}
+
+/* Header */
+.lp-header {
+  position: sticky;
+  top: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid #E2E8F0;
+  z-index: 100;
+}
+
+.lp-header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 80px;
+}
+
+.lp-logo {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #2563EB;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.lp-nav {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+}
+
+.lp-nav a {
+  color: #475569;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.lp-nav a:hover {
+  color: #2563EB;
+}
+
+/* Hero Section */
+.lp-hero {
+  padding: 120px 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+}
+
+.lp-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563EB;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+
+.lp-hero p {
+  font-size: 1.25rem;
+  margin-bottom: 32px;
+}
+
+.lp-hero-visual {
+  position: relative;
+}
+
+.lp-blob {
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 400px;
+  height: 400px;
+  background: linear-gradient(135deg, #E0E7FF 0%, #DBEAFE 100%);
+  border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+  z-index: 0;
+  animation: blob-float 8s ease-in-out infinite alternate;
+}
+
+.lp-mockup {
+  position: relative;
+  z-index: 1;
+  background: #FFFFFF;
+  border-radius: 24px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  border: 8px solid #1E293B;
+  aspect-ratio: 9/16;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+@keyframes blob-float {
+  0% { transform: translateY(0) scale(1); }
+  100% { transform: translateY(-20px) scale(1.05); }
+}
+
+/* As Seen On */
+.lp-seen-on {
+  text-align: center;
+  padding: 40px 0;
+  border-top: 1px solid #E2E8F0;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.lp-seen-on p {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94A3B8;
+  margin-bottom: 24px;
+}
+
+.lp-logos {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.lp-logos span {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #94A3B8;
+  filter: grayscale(100%) opacity(60%);
+  transition: all 0.3s ease;
+  cursor: default;
+}
+
+.lp-logos span:hover {
+  filter: grayscale(0%) opacity(100%);
+  color: #2563EB;
+}
+
+/* Zig-Zag Features */
+.lp-feature-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+  margin-bottom: 100px;
+}
+
+.lp-feature-row:last-child {
+  margin-bottom: 0;
+}
+
+.lp-feature-text ul {
+  list-style: none;
+  padding: 0;
+  margin: 24px 0 0 0;
+}
+
+.lp-feature-text li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.lp-feature-icon {
+  color: #2563EB;
+  background: rgba(37, 99, 235, 0.1);
+  padding: 6px;
+  border-radius: 50%;
+}
+
+.lp-feature-image {
+  background: #E2E8F0;
+  border-radius: 16px;
+  aspect-ratio: 4/3;
+  width: 100%;
+  object-fit: cover;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+
+/* Statistics Grid */
+.lp-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 32px;
+}
+
+.lp-stat-card {
+  background: #FFFFFF;
+  padding: 32px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  text-align: center;
+}
+
+.lp-stat-number {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: #EF4444; /* Alert Red */
+  margin-bottom: 8px;
+}
+
+/* Grid Cards (Revolutionizing Features) */
+.lp-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+
+.lp-card {
+  background: #FFFFFF;
+  padding: 32px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.lp-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+}
+
+.lp-card-icon {
+  width: 48px;
+  height: 48px;
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563EB;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+/* Testimonials */
+.lp-testimonials {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 32px;
+}
+
+.lp-testimonial-card {
+  background: #FFFFFF;
+  padding: 32px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
+
+.lp-quote {
+  font-style: italic;
+  font-size: 1.1rem;
+  color: #334155;
+  margin-bottom: 24px;
+}
+
+.lp-user {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.lp-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #E2E8F0;
+}
+
+.lp-user-info strong {
+  display: block;
+  color: #1E293B;
+}
+
+.lp-user-info span {
+  font-size: 0.85rem;
+  color: #64748B;
+}
+
+/* Footer */
+.lp-footer {
+  background: #0F172A;
+  color: #9CA3AF;
+  padding: 80px 0 0 0;
+}
+
+.lp-footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 40px;
+  margin-bottom: 60px;
+}
+
+.lp-footer-brand {
+  color: #FFFFFF;
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lp-footer h4 {
+  color: #FFFFFF;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.lp-footer ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.lp-footer li {
+  margin-bottom: 12px;
+}
+
+.lp-footer a {
+  color: #9CA3AF;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.lp-footer a:hover {
+  color: #FFFFFF;
+}
+
+.lp-footer-bottom {
+  border-top: 1px solid #1E293B;
+  padding: 24px 0;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+/* Responsive Overrides */
+@media (max-width: 900px) {
+  .lp-hero { grid-template-columns: 1fr; text-align: center; padding: 60px 0; }
+  .lp-hero h1 { font-size: 2.8rem; }
+  .lp-blob { right: 50%; transform: translateX(50%); }
+  .lp-feature-row { grid-template-columns: 1fr; text-align: center; gap: 40px; }
+  .lp-feature-row:nth-child(even) { direction: rtl; }
+  .lp-feature-row:nth-child(even) > * { direction: ltr; }
+  .lp-feature-text li { justify-content: center; text-align: left; }
+  .lp-grid { grid-template-columns: 1fr; }
+  .lp-footer-grid { grid-template-columns: 1fr; }
+}

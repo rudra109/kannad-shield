@@ -1,0 +1,152 @@
+name: Kanad S.H.I.E.L.D. — CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+
+  # ── SOS Service (Node.js) ───────────────────────────────────
+  sos-service:
+    name: SOS Service — Build & Test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: safetydb_test
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: pass
+        options: >-
+          --health-cmd "pg_isready -U user -d safetydb_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: services/sos-service/package-lock.json
+
+      - name: Apply schema
+        run: psql postgresql://user:pass@localhost:5432/safetydb_test -f services/schema.sql
+
+      - name: Install dependencies
+        working-directory: services/sos-service
+        run: npm ci
+
+      - name: Run tests
+        working-directory: services/sos-service
+        env:
+          DATABASE_URL: postgresql://user:pass@localhost:5432/safetydb_test
+          JWT_SECRET: test_secret_for_ci_only
+          REDIS_URL: redis://localhost:6379
+          ERSS_MODE: mock
+          NOTIFY_MODE: mock
+          PORT: 4000
+          NODE_ENV: test
+        run: npm test
+
+  # ── Cybercrime Service (Python / FastAPI) ───────────────────
+  cybercrime-service:
+    name: Cybercrime Service — Build & Test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: safetydb_test
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: pass
+        options: >-
+          --health-cmd "pg_isready -U user -d safetydb_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Apply schema
+        run: psql postgresql://user:pass@localhost:5432/safetydb_test -f services/schema.sql
+        env:
+          PGPASSWORD: pass
+
+      - name: Install dependencies
+        working-directory: services/cybercrime-service
+        run: pip install -r requirements.txt
+
+      - name: Health check import
+        working-directory: services/cybercrime-service
+        run: python -c "from main import app; print('FastAPI app imported OK')"
+        env:
+          DATABASE_URL: postgresql://user:pass@localhost:5432/safetydb_test
+          JWT_SECRET: test_secret_for_ci_only
+          MINIO_ENDPOINT: localhost:9000
+          MINIO_ACCESS_KEY: minioadmin
+          MINIO_SECRET_KEY: minioadmin
+
+  # ── Docker Compose build check ──────────────────────────────
+  docker-compose-build:
+    name: Docker Compose — Build Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create dummy .env
+        run: cp .env.example .env
+
+      - name: Generate self-signed TLS cert
+        run: |
+          mkdir -p services/api-gateway/certs
+          openssl req -x509 -nodes -days 1 -newkey rsa:2048 \
+            -keyout services/api-gateway/certs/demo.key \
+            -out    services/api-gateway/certs/demo.crt \
+            -subj   "/CN=localhost"
+
+      - name: Build all services
+        run: docker compose build --parallel
+
+      - name: Start stack and wait for health
+        run: |
+          docker compose up -d
+          sleep 30
+          docker compose ps
+
+      - name: Check SOS service health
+        run: curl -f http://localhost:4000/health
+
+      - name: Check Cybercrime service health
+        run: curl -f http://localhost:4001/health
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
