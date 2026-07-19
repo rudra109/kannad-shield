@@ -40,7 +40,7 @@ from pydantic import BaseModel, Field
 
 from auth import verify_token, require_officer
 from evidence import router as evidence_router, set_pool
-
+from analytics import router as analytics_router
 # ── Config ────────────────────────────────────────────────────
 DATABASE_URL  = os.getenv("DATABASE_URL", "postgresql://user:pass@localhost:5432/safetydb")
 REDIS_URL     = os.getenv("REDIS_URL", "redis://localhost:6379")
@@ -87,7 +87,7 @@ app.add_middleware(
 )
 
 app.include_router(evidence_router)
-
+app.include_router(analytics_router)
 # ── DB dependency ─────────────────────────────────────────────
 async def get_db() -> asyncpg.Pool:
     return _db_pool
