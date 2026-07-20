@@ -19,7 +19,7 @@ export default function LandingPage() {
             <a href="#features">Features</a>
             <a href="#how-it-works">How it Works</a>
             <a href="#testimonials">Testimonials</a>
-            <Link to="/login" className="lp-btn lp-btn-outline" style={{ padding: '8px 20px' }}>Police Login</Link>
+            <Link to="/login" className="hud-btn hud-btn-ghost" style={{ padding: '8px 20px' }}>Police Login</Link>
           </nav>
         </div>
       </header>
@@ -31,8 +31,8 @@ export default function LandingPage() {
           <h1>Advanced Cyber Safety for the Modern Citizen.</h1>
           <p>Kanad S.H.I.E.L.D. integrates AI-driven risk analysis, live emergency tracking, and rapid response networks directly into the hands of local police forces.</p>
           <div style={{ display: 'flex', gap: 16 }}>
-            <button className="lp-btn lp-btn-primary">Schedule a Demo</button>
-            <button className="lp-btn lp-btn-outline">Download App</button>
+            <button className="hud-btn hud-btn-primary">Schedule a Demo</button>
+            <button className="hud-btn hud-btn-ghost">Download App</button>
           </div>
         </div>
         <div className="lp-hero-visual">

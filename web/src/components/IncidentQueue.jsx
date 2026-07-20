@@ -1,8 +1,8 @@
 // =============================================================
-//  Incident Queue — Tabular List + Detail Panel
+//  Incident Queue — HUD Panel Design
 // =============================================================
 import { useState, useEffect } from 'react';
-import { ShieldAlert, RefreshCw, XCircle, FileText, ChevronRight, Filter } from 'lucide-react';
+import { RefreshCw, XCircle, FileText, ChevronRight, Filter, Cpu, CheckCircle2 } from 'lucide-react';
 import api from '../services/api.js';
 import AIRiskBadge from './AIRiskBadge.jsx';
 import EvidenceViewer from './EvidenceViewer.jsx';
@@ -72,142 +72,162 @@ export default function IncidentQueue({ onSelectIncident }) {
     }
   };
 
+  function getSevClass(score) {
+    return score >= 70 ? 'critical' : score >= 40 ? 'warn' : 'safe';
+  }
+
+  function timeSince(iso) {
+    const diff = Date.now() - new Date(iso).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    return `${Math.floor(h / 24)}d ago`;
+  }
+
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: selected ? '1fr 400px' : '1fr', gap: 16, alignItems: 'start' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: selected ? '1fr 400px' : '1fr', gap: 0, alignItems: 'start', height: '100%', overflow: 'hidden' }}>
       
       {/* ── QUEUE LIST ────────────────────────────────────── */}
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <div className="card-header" style={{ padding: '12px 16px', margin: 0, background: 'var(--bg-surface)' }}>
-          <div style={{ display: 'flex', gap: 16 }}>
+      <div style={{ padding: 0, overflowY: 'auto', height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--hud-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 8 }}>
             <button
-              id="filter-open"
-              className={`tab ${activeTab === 'open' ? 'active' : ''}`}
-              style={{ padding: '8px 0', fontSize: '0.8rem' }}
+              className={`hud-btn ${activeTab === 'open' ? 'hud-btn-primary' : 'hud-btn-ghost'}`}
+              style={{ padding: '4px 10px', fontSize: '0.65rem' }}
               onClick={() => setActiveTab('open')}
             >
-              Open/Review ({total})
+              Active ({activeTab === 'open' ? total : '?'})
             </button>
             <button
-              id="filter-resolved"
-              className={`tab ${activeTab === 'resolved' ? 'active' : ''}`}
-              style={{ padding: '8px 0', fontSize: '0.8rem' }}
+              className={`hud-btn ${activeTab === 'resolved' ? 'hud-btn-primary' : 'hud-btn-ghost'}`}
+              style={{ padding: '4px 10px', fontSize: '0.65rem' }}
               onClick={() => setActiveTab('resolved')}
             >
-              Closed
+              Archive
             </button>
           </div>
-          <button className="btn btn-ghost btn-sm" onClick={() => fetchIncidents()}>
-            <RefreshCw size={14} className={loading ? 'spin' : ''} /> Refresh
+          <button className="hud-btn hud-btn-ghost" style={{ padding: '4px 10px', fontSize: '0.65rem' }} onClick={() => fetchIncidents()}>
+            <RefreshCw size={12} className={loading ? 'spin' : ''} />
           </button>
         </div>
 
-        <div style={{ overflowX: 'auto' }}>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th style={{ width: 100 }}>INCIDENT ID</th>
-                <th style={{ width: 100 }}>TIME</th>
-                <th style={{ width: 120 }}>CATEGORY</th>
-                <th style={{ width: 80 }}>SEVERITY</th>
-                <th>DESCRIPTION</th>
-                <th style={{ width: 100 }}>STATUS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {incidents.length === 0 ? (
-                <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>
-                    No incidents found.
-                  </td>
-                </tr>
-              ) : (
-                incidents.map(inc => (
-                  <tr key={inc.id} onClick={() => handleSelect(inc)} className={selected?.id === inc.id ? 'selected' : ''}>
-                    <td className="mono-id">{inc.id.split('-')[0]}...</td>
-                    <td style={{ fontFamily: 'var(--font-mono)' }}>{new Date(inc.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
-                    <td style={{ textTransform: 'capitalize' }}>{inc.category?.replace(/_/g, ' ')}</td>
-                    <td>
-                      <div className={`severity-indicator sev-${inc.severity >= 70 ? 'high' : inc.severity >= 40 ? 'medium' : 'low'}`}>
-                        <div className="sev-dot" />
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>{inc.severity}</span>
-                      </div>
-                    </td>
-                    <td style={{ maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {inc.description}
-                    </td>
-                    <td><span className={`status-pill status-${inc.status}`}>{inc.status.replace(/_/g, ' ')}</span></td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        <div className="case-strip" style={{ flex: 1, overflowY: 'auto' }}>
+          {incidents.length === 0 ? (
+            <div className="empty-state">
+              <Filter size={32} />
+              <div className="empty-state-title">No Case Files</div>
+            </div>
+          ) : (
+            incidents.map(inc => {
+              const sc = getSevClass(inc.severity);
+              const flagged = inc.ai_flags?.some(f => f.flag_for_review);
+              return (
+                <div
+                  key={inc.id}
+                  className={`case-file ${selected?.id === inc.id ? 'selected' : ''}`}
+                  onClick={() => handleSelect(inc)}
+                >
+                  <div className={`case-file-bar ${sc}`} />
+                  <div className="case-num">
+                    <div className="case-num-id">#{(inc.id || '').slice(-4).toUpperCase()}</div>
+                    <div className="case-num-time">{timeSince(inc.created_at)}</div>
+                  </div>
+                  <div>
+                    <div className="case-body-category">{(inc.category || '').replace(/_/g, ' ')}</div>
+                    <div className="case-body-desc">{inc.description || '—'}</div>
+                  </div>
+                  <div className={`sev-chip ${sc}`}>{inc.severity}</div>
+                  <div>
+                    {flagged ? (
+                      <span className="ai-flag flagged"><Cpu size={9} /> Alert</span>
+                    ) : (
+                      <span className="ai-flag clear"><CheckCircle2 size={9} /> Clear</span>
+                    )}
+                  </div>
+                  <div>
+                    <span className={`status-stamp ${(inc.status || '').replace(/\s/g, '_')}`}>
+                      {(inc.status || '').replace(/_/g, ' ')}
+                    </span>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
         
         {total > 15 && (
-          <div style={{ padding: 12, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', background: 'var(--bg-surface)' }}>
-            <button className="btn btn-outline btn-sm" disabled={page === 1} onClick={() => { setPage(page-1); fetchIncidents(page-1); }}>Prev</button>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Page {page}</span>
-            <button className="btn btn-outline btn-sm" disabled={incidents.length < 15} onClick={() => { setPage(page+1); fetchIncidents(page+1); }}>Next</button>
+          <div style={{ padding: '12px 20px', borderTop: '1px solid var(--hud-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <button className="hud-btn hud-btn-ghost" disabled={page === 1} onClick={() => { setPage(page-1); fetchIncidents(page-1); }}>Prev</button>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Page {page}</span>
+            <button className="hud-btn hud-btn-ghost" disabled={incidents.length < 15} onClick={() => { setPage(page+1); fetchIncidents(page+1); }}>Next</button>
           </div>
         )}
       </div>
 
       {/* ── DETAIL PANEL ──────────────────────────────────── */}
       {selected && (
-        <div className="card" style={{ padding: 0, overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}>
-          <div className="card-header" style={{ padding: '16px', margin: 0, background: 'var(--bg-surface)' }}>
+        <div style={{ borderLeft: '1px solid var(--hud-border)', height: '100%', display: 'flex', flexDirection: 'column', background: 'rgba(0,0,0,0.2)' }}>
+          
+          <div style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--hud-border)' }}>
             <div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>INCIDENT DETAILS</div>
-              <div style={{ fontSize: '1rem', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{selected.id}</div>
+              <div style={{ fontSize: '0.62rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 2 }}>Case File</div>
+              <div style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>{selected.id}</div>
             </div>
-            <button className="btn btn-ghost btn-sm" onClick={() => { setSelected(null); setDetailData(null); }}><XCircle size={16} /></button>
+            <button className="hud-btn hud-btn-ghost" style={{ padding: 4 }} onClick={() => { setSelected(null); setDetailData(null); }}><XCircle size={16} /></button>
           </div>
 
-          <div style={{ padding: 16, borderBottom: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-              <span className={`status-pill status-${selected.status}`}>{selected.status.replace(/_/g, ' ')}</span>
-              <span className="status-pill">{selected.category?.replace(/_/g, ' ')}</span>
+          <div style={{ padding: '20px', borderBottom: '1px solid var(--hud-border)' }}>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+              <span className={`status-stamp ${(selected.status || '').replace(/\s/g, '_')}`}>
+                {(selected.status || '').replace(/_/g, ' ')}
+              </span>
+              <span className="status-stamp" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)' }}>
+                {(selected.category || '').replace(/_/g, ' ')}
+              </span>
             </div>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: 12 }}>{selected.description}</p>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
-              <span>Reported: {new Date(selected.created_at).toLocaleString()}</span>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-primary)', lineHeight: 1.6, marginBottom: 16 }}>
+              {selected.description}
+            </p>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+              Filed: {new Date(selected.created_at).toLocaleString()}
             </div>
           </div>
 
           {/* Action Bar */}
-          <div style={{ display: 'flex', gap: 8, padding: 12, borderBottom: '1px solid var(--border)', background: 'var(--bg-base)' }}>
+          <div style={{ display: 'flex', gap: 8, padding: '12px 20px', borderBottom: '1px solid var(--hud-border)', background: 'rgba(255,255,255,0.03)' }}>
             {selected.status === 'open' && (
-              <button className="btn btn-outline btn-sm" onClick={() => handleStatusChange('under_review')} style={{ flex: 1, borderColor: 'var(--amber)', color: 'var(--amber)' }}>
-                Mark Under Review
+              <button className="hud-btn hud-btn-ghost" onClick={() => handleStatusChange('under_review')} style={{ flex: 1, borderColor: 'rgba(245, 158, 11, 0.4)', color: 'var(--warn)' }}>
+                Review
               </button>
             )}
             {(selected.status === 'open' || selected.status === 'under_review') && (
-              <button className="btn btn-outline btn-sm" onClick={() => handleStatusChange('resolved')} style={{ flex: 1, borderColor: 'var(--green)', color: 'var(--green)' }}>
+              <button className="hud-btn hud-btn-ghost" onClick={() => handleStatusChange('resolved')} style={{ flex: 1, borderColor: 'rgba(16, 185, 129, 0.4)', color: 'var(--safe)' }}>
                 Resolve
               </button>
             )}
-            <button className="btn btn-primary btn-sm" onClick={() => setDraftingFir(true)} style={{ flex: 1 }}>
+            <button className="hud-btn hud-btn-primary" onClick={() => setDraftingFir(true)} style={{ flex: 1 }}>
               <FileText size={14} /> Draft FIR
             </button>
           </div>
 
           {/* Details Tabs */}
-          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-surface)' }}>
+          <div style={{ padding: '12px 20px 0', borderBottom: '1px solid var(--hud-border)', display: 'flex', gap: 8 }}>
             {['ai', 'evidence', 'links'].map((tab) => (
               <button
                 key={tab}
-                className={`tab ${detailTab === tab ? 'active' : ''}`}
-                style={{ flex: 1, padding: '8px 0', fontSize: '0.75rem', justifyContent: 'center' }}
+                className={`hud-btn ${detailTab === tab ? 'hud-btn-primary' : 'hud-btn-ghost'}`}
+                style={{ flex: 1, padding: '8px 0', borderRadius: '8px 8px 0 0', borderBottom: 'none' }}
                 onClick={() => setDetailTab(tab)}
               >
-                {tab === 'ai' ? 'AI Analysis' : tab === 'evidence' ? 'Evidence' : 'Case Links'}
+                {tab === 'ai' ? 'Analysis' : tab === 'evidence' ? 'Evidence' : 'Links'}
               </button>
             ))}
           </div>
 
-          <div style={{ padding: 16, flex: 1, overflowY: 'auto' }}>
+          <div style={{ padding: '20px', flex: 1, overflowY: 'auto' }}>
             {!detailData ? (
-              <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}><span className="spinner" /></div>
+              <div className="empty-state"><span className="spinner" /></div>
             ) : detailTab === 'ai' ? (
               <div>
                 {detailData.ai_scores?.length > 0 ? (
@@ -217,7 +237,7 @@ export default function IncidentQueue({ onSelectIncident }) {
                     </div>
                   ))
                 ) : (
-                  <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>No AI analysis available for this incident.</div>
+                  <div className="empty-state-sub">No AI analysis available for this incident.</div>
                 )}
               </div>
             ) : detailTab === 'evidence' ? (

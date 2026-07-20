@@ -39,31 +39,31 @@ export default function AIRiskBadge({ scoreData, expanded = false }) {
   }
 
   return (
-    <div className="card" style={{ background: 'var(--bg-surface)', padding: 16 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, fontSize: '0.85rem' }}>
+    <div style={{ background: 'var(--stream-dim)', border: '1px solid var(--stream-border)', borderRadius: 12, padding: '16px 20px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: '0.8rem', color: 'var(--stream-text)' }}>
           {MODULE_ICONS[module]} {MODULE_LABELS[module] || module}
         </div>
-        <div style={{ fontSize: '1.25rem', fontWeight: 800, color }}>
+        <div style={{ fontSize: '1.4rem', fontWeight: 900, color, fontFamily: 'var(--font-mono)' }}>
           {risk_score?.toFixed(0)}%
         </div>
       </div>
 
-      <div style={{ height: 4, background: 'var(--bg-base)', borderRadius: 2, marginBottom: 12, overflow: 'hidden' }}>
+      <div style={{ height: 4, background: 'var(--stream-border)', borderRadius: 2, marginBottom: 12, overflow: 'hidden' }}>
         <div style={{ height: '100%', width: `${risk_score}%`, background: color }} />
       </div>
 
-      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'space-between' }}>
+      <div style={{ fontSize: '0.72rem', color: 'var(--stream-muted)', display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
         <span>Confidence: {Math.round((confidence || 0) * 100)}%</span>
-        {flag_for_review && <span style={{ color: 'var(--amber)', fontWeight: 600 }}>Human Review Required</span>}
+        {flag_for_review && <span style={{ color: 'var(--warn)', fontWeight: 700 }}>Human Review Required</span>}
       </div>
 
       {details?.top_signals?.length > 0 && (
-        <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: 8, fontWeight: 600 }}>TOP SIGNALS</div>
+        <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--stream-border)' }}>
+          <div style={{ fontSize: '0.62rem', color: 'var(--stream-muted)', marginBottom: 8, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Top Threat Signals</div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {details.top_signals.map((s, i) => (
-              <span key={i} className="status-pill" style={{ color: 'var(--text-primary)', borderColor: 'var(--border)' }}>
+              <span key={i} style={{ padding: '4px 8px', borderRadius: 6, fontSize: '0.68rem', fontWeight: 700, background: 'var(--stream-card)', color: 'var(--stream-text)', border: '1px solid var(--stream-border)' }}>
                 {s.replace(/_/g, ' ')}
               </span>
             ))}

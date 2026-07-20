@@ -54,12 +54,12 @@ export default function EvidenceViewer({ incidentId }) {
 
   return (
     <div>
-      <div className="card-header" style={{ marginBottom: 16 }}>
-        <span className="card-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Link2 size={16} /> Evidence Chain of Custody</span>
-        <div className="flex gap-2" style={{ gap: 8, display: 'flex' }}>
+      <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: '0.62rem', fontWeight: 800, color: 'var(--stream-muted)', textTransform: 'uppercase', letterSpacing: '0.14em', display: 'flex', alignItems: 'center', gap: 6 }}><Link2 size={14} /> Evidence Chain of Custody</span>
+        <div style={{ display: 'flex', gap: 8 }}>
           <label
             id="evidence-upload-btn"
-            className="btn btn-ghost btn-sm"
+            className="btn btn-ghost-stream btn-sm"
             style={{ cursor: 'pointer' }}
           >
             {uploading ? <span className="spinner" /> : <><Upload size={14} /> Upload Evidence</>}
@@ -67,7 +67,7 @@ export default function EvidenceViewer({ incidentId }) {
           </label>
           <button
             id="verify-chain-btn"
-            className="btn btn-primary btn-sm"
+            className="btn btn-accent btn-sm"
             onClick={verifyChain}
             disabled={verifying || evidence.length === 0}
           >
@@ -76,10 +76,10 @@ export default function EvidenceViewer({ incidentId }) {
         </div>
       </div>
 
-      {error && <div className="alert-banner critical" style={{ marginBottom: 16 }}>{error}</div>}
+      {error && <div className="alert alert-error" style={{ marginBottom: 16 }}>{error}</div>}
 
       {verifyResult && (
-        <div className={`alert-banner ${verifyResult.valid ? 'info' : 'critical'}`} style={{ marginBottom: 20 }}>
+        <div className={`alert ${verifyResult.valid ? 'alert-success' : 'alert-error'}`} style={{ marginBottom: 20 }}>
           {verifyResult.valid ? <CheckCircle2 size={16} /> : <AlertOctagon size={16} />}
           <div>
             <strong>{verifyResult.valid ? 'CHAIN VERIFIED' : 'CHAIN COMPROMISED'}</strong>
@@ -92,43 +92,43 @@ export default function EvidenceViewer({ incidentId }) {
       )}
 
       {loading ? (
-        <div style={{ padding: 40, textAlign: 'center' }}><span className="spinner" /></div>
+        <div style={{ padding: 40, textAlign: 'center' }}><span className="spinner" style={{ borderColor: 'var(--stream-muted)' }} /></div>
       ) : evidence.length === 0 ? (
-        <div className="empty-state" style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
-          <FileDigit size={32} style={{ opacity: 0.3, margin: '0 auto 12px' }} />
-          <div className="empty-title" style={{ fontWeight: 600 }}>No Evidence Attached</div>
-          <div className="empty-sub" style={{ fontSize: '0.8rem' }}>Upload screenshots or logs to begin the hash chain.</div>
+        <div className="empty-state">
+          <FileDigit size={32} />
+          <div className="empty-state-title">No Evidence Attached</div>
+          <div className="empty-state-sub">Upload screenshots or logs to begin the hash chain.</div>
         </div>
       ) : (
-        <div className="hash-timeline" style={{ position: 'relative', paddingLeft: 24, borderLeft: '2px solid var(--border)' }}>
+        <div className="hash-timeline" style={{ position: 'relative', paddingLeft: 24, borderLeft: '2px solid var(--stream-border)' }}>
           {evidence.map((ev, i) => (
             <div key={ev.file_hash} style={{ position: 'relative', marginBottom: 24 }}>
               <div style={{
                 position: 'absolute', left: -31, top: 4, width: 12, height: 12,
-                borderRadius: '50%', background: 'var(--bg-card)', border: '2px solid var(--blue)'
+                borderRadius: '50%', background: 'white', border: '2px solid var(--accent)'
               }} />
               
-              <div className="card" style={{ padding: 12, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)' }}>
+              <div style={{ padding: 12, border: '1px solid var(--stream-border)', borderRadius: 8, background: 'var(--stream-dim)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>
-                    <FileDigit size={14} style={{ display: 'inline', marginRight: 4, verticalAlign: -2 }} />
+                  <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--stream-text)' }}>
+                    <FileDigit size={14} style={{ display: 'inline', marginRight: 6, verticalAlign: -2 }} />
                     {ev.file_ref || 'Uploaded File'}
                   </div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--stream-muted)', display: 'flex', alignItems: 'center', gap: 4, fontWeight: 600 }}>
                     <Clock size={12} />
                     {ev.ntp_timestamp ? new Date(ev.ntp_timestamp).toLocaleString() : 'NTP Pending'}
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '8px 16px', fontSize: '0.7rem', fontFamily: 'var(--font-mono)' }}>
-                  <div style={{ color: 'var(--text-muted)' }}>FILE HASH</div>
-                  <div style={{ color: 'var(--blue)' }} title={ev.file_hash}>{truncHash(ev.file_hash)}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '8px 16px', fontSize: '0.68rem', fontFamily: 'var(--font-mono)' }}>
+                  <div style={{ color: 'var(--stream-muted)', fontWeight: 600 }}>FILE HASH</div>
+                  <div style={{ color: 'var(--accent)' }} title={ev.file_hash}>{truncHash(ev.file_hash)}</div>
                   
-                  <div style={{ color: 'var(--text-muted)' }}>PREV HASH</div>
-                  <div style={{ color: 'var(--text-secondary)' }} title={ev.prev_hash}>{truncHash(ev.prev_hash)}</div>
+                  <div style={{ color: 'var(--stream-muted)', fontWeight: 600 }}>PREV HASH</div>
+                  <div style={{ color: 'var(--stream-text)' }} title={ev.prev_hash}>{truncHash(ev.prev_hash)}</div>
 
-                  <div style={{ color: 'var(--text-muted)' }}>CHAIN HASH</div>
-                  <div style={{ color: 'var(--green)', fontWeight: 600 }} title={ev.chain_hash}>{truncHash(ev.chain_hash)}</div>
+                  <div style={{ color: 'var(--stream-muted)', fontWeight: 600 }}>CHAIN HASH</div>
+                  <div style={{ color: 'var(--safe)', fontWeight: 700 }} title={ev.chain_hash}>{truncHash(ev.chain_hash)}</div>
                 </div>
               </div>
             </div>

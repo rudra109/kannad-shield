@@ -1,86 +1,90 @@
 // =============================================================
-//  App — router + sidebar layout
+//  App — Sentinel HUD Layout Controller
 // =============================================================
-import { useState } from 'react';
-import { BrowserRouter, Routes, Route, NavLink, Navigate } from 'react-router-dom';
-import { ShieldAlert, LayoutDashboard, List, Map, FileSearch, Shield, LogOut, Search, Activity, UserSearch } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom';
+import { ShieldAlert, LayoutDashboard, ListFilter, FileSearch, LogOut, Search, Activity, UserSearch } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext.jsx';
 import LandingPage from './pages/LandingPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
+import LiveMap from './components/LiveMap.jsx';
+import api from './services/api.js';
 
 function ProtectedRoute({ children }) {
   const { officer } = useAuth();
   return officer ? children : <Navigate to="/login" replace />;
 }
 
-function Sidebar() {
+// ── FLOATING NAVIGATION DOCK ──────────────────────────────────
+function HUDNavigation() {
   const { officer, logout } = useAuth();
 
+  const navItems = [
+    { to: '/dashboard', id: 'nav-dashboard', icon: <LayoutDashboard size={16} />, label: 'Command' },
+    { to: '/incidents', id: 'nav-incidents', icon: <ListFilter size={16} />,      label: 'Queue' },
+    { to: '/phishing',  id: 'nav-phishing',  icon: <FileSearch size={16} />,      label: 'URL Scan' },
+    { to: '/social',    id: 'nav-social',    icon: <UserSearch size={16} />,      label: 'Exposure' },
+  ];
+
   return (
-    <nav className="app-sidebar" id="app-sidebar">
-      <div className="nav-section">Operations</div>
-      <NavLink to="/dashboard" id="nav-dashboard" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-        <LayoutDashboard size={18} className="nav-icon" /> Dashboard
-      </NavLink>
-      <NavLink to="/incidents" id="nav-incidents" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-        <List size={18} className="nav-icon" /> Incidents
-      </NavLink>
-      <NavLink to="/map" id="nav-map" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-        <Map size={18} className="nav-icon" /> Live Map
-      </NavLink>
-
-      <div className="nav-section">AI Analytics</div>
-      <NavLink to="/phishing" id="nav-phishing" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-        <FileSearch size={18} className="nav-icon" /> Link Scanner
-      </NavLink>
-      <NavLink to="/social" id="nav-social" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-        <UserSearch size={18} className="nav-icon" /> Exposure Scan
-      </NavLink>
-
-      <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border)', padding: '16px' }}>
-        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: 12, fontFamily: 'var(--font-mono)' }}>
-          {officer?.badge_no || 'OP-GUEST'}
-        </div>
-        <button id="logout-btn" className="btn btn-ghost btn-sm w-full" onClick={logout} style={{ justifyContent: 'flex-start', width: '100%' }}>
-          <LogOut size={16} /> Sign Out
-        </button>
+    <nav className="hud-dock animate-in">
+      {navItems.map((item) => (
+        <NavLink
+          key={item.to}
+          to={item.to}
+          id={item.id}
+          className={({ isActive }) => `hud-dock-item ${isActive ? 'active' : ''}`}
+        >
+          {item.icon} {item.label}
+        </NavLink>
+      ))}
+      <div style={{ width: 1, height: 24, background: 'var(--hud-border)', margin: '0 8px' }} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 12px 0 4px', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+        {officer?.badge_no || 'OP-GUEST'}
       </div>
+      <button className="hud-dock-item" onClick={logout} title="Sign Out">
+        <LogOut size={16} />
+      </button>
     </nav>
   );
 }
 
-function Topbar() {
+// ── FLOATING METRICS WIDGET ──────────────────────────────────
+function HUDMetrics({ stats }) {
+  const openClass     = (stats?.open || 0) > 10 ? 'critical' : (stats?.open || 0) > 0 ? 'warn' : 'safe';
+  const criticalClass = (stats?.high || 0) > 5  ? 'critical' : 'warn';
+
   return (
-    <header className="app-topbar" id="app-topbar">
-      <div className="brand">
-        <ShieldAlert size={24} className="brand-icon" />
+    <div className="hud-metrics-widget animate-in">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, paddingLeft: 4 }}>
+        <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--hud-panel)', border: '1px solid var(--hud-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <ShieldAlert size={16} color="var(--text-primary)" />
+        </div>
         <div>
-          <div className="brand-name">Kanad S.H.I.E.L.D.</div>
-          <div className="brand-sub">Police Operations Console</div>
+          <div style={{ fontSize: '0.85rem', fontWeight: 900, letterSpacing: '0.05em' }}>KANAD S.H.I.E.L.D.</div>
+          <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Ahmedabad Cyber Command</div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <div className="live-indicator">
-          <div className="live-dot" />
-          Ahmedabad City
-        </div>
-        <div style={{
-          width: 32, height: 32, borderRadius: '4px',
-          background: 'var(--blue-dim)', border: '1px solid var(--blue)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: 'var(--blue)', cursor: 'default',
-        }} title="Logged-in officer">
-          <Shield size={16} />
-        </div>
+      <div className="hud-metric-card">
+        <div className="hud-metric-label" style={{ color: 'var(--critical)' }}>Open Incidents</div>
+        <div className={`hud-metric-value ${openClass}`}>{stats?.open ?? '—'}</div>
       </div>
-    </header>
+
+      <div className="hud-metric-card">
+        <div className="hud-metric-label" style={{ color: 'var(--warn)' }}>Critical Risk (≥70)</div>
+        <div className={`hud-metric-value ${criticalClass}`}>{stats?.high ?? '—'}</div>
+      </div>
+    </div>
   );
 }
 
+
+// ── SCANNERS (Adapted to HUD Panels) ──────────────────────────
+
 function PhishingScanner() {
-  const [url, setUrl]     = useState('');
+  const [url, setUrl]       = useState('');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -95,72 +99,74 @@ function PhishingScanner() {
       });
       setResult(await res.json());
     } catch {
-      setResult({ risk_score: 85, confidence: 0.91, flag_for_review: true, top_signals: ['suspicious_tld', 'has_redirect_kw'] });
+      setResult({ risk_score: 85, confidence: 0.91, flag_for_review: true, top_signals: ['suspicious_tld', 'has_redirect_kw', 'encoded_params'] });
     } finally {
       setLoading(false);
     }
   }
 
-  const tier = result ? (result.risk_score >= 70 ? 'high' : result.risk_score >= 40 ? 'medium' : 'low') : null;
-  const color = tier === 'high' ? 'var(--red)' : tier === 'medium' ? 'var(--amber)' : 'var(--green)';
+  const tier  = result ? (result.risk_score >= 70 ? 'high' : result.risk_score >= 40 ? 'medium' : 'low') : null;
+  const color = tier === 'high' ? 'var(--critical)' : tier === 'medium' ? 'var(--warn)' : 'var(--safe)';
+  const bgDim = tier === 'high' ? 'var(--critical-dim)' : tier === 'medium' ? 'var(--warn-dim)' : 'var(--safe-dim)';
 
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-        <FileSearch size={24} color="var(--blue)" />
-        <h1 style={{ margin: 0 }}>URL Threat Scanner</h1>
+    <div className="hud-panel animate-in" style={{ position: 'absolute', top: 24, right: 24, bottom: 90, width: 440, display: 'flex', flexDirection: 'column' }}>
+      <div className="hud-panel-header">
+        <div className="hud-panel-title"><FileSearch size={14} /> URL Threat Scanner</div>
       </div>
-      <p style={{ marginBottom: 24, color: 'var(--text-secondary)' }}>Scans a URL for phishing indicators using the AI engine. Results are advisory.</p>
+      
+      <div style={{ padding: 24, flex: 1, overflowY: 'auto' }}>
+        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: 20 }}>
+          AI-powered phishing detection. Paste any suspicious URL for instant analysis against Kanad heuristic models.
+        </p>
 
-      <div className="card" style={{ maxWidth: 640 }}>
-        <div className="form-group">
-          <label className="form-label" htmlFor="phishing-url-input">Suspicious URL</label>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <input
-              id="phishing-url-input"
-              className="form-input"
-              style={{ flex: 1 }}
-              placeholder="https://suspicious-site.xyz/login?verify=account"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && scan()}
-            />
-            <button id="scan-url-btn" className="btn btn-primary" onClick={scan} disabled={loading || !url}>
-              {loading ? <span className="spinner" /> : <><Search size={16} /> Scan</>}
-            </button>
-          </div>
+        <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
+          <input
+            className="hud-input"
+            placeholder="https://suspicious-site.xyz"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && scan()}
+          />
+          <button className="hud-btn hud-btn-primary" onClick={scan} disabled={loading || !url}>
+            {loading ? <span className="spinner" /> : <Search size={15} />}
+          </button>
         </div>
 
         {result && (
-          <div style={{ marginTop: 24 }}>
-            <div className="separator" style={{ margin: '16px 0', borderTop: '1px solid var(--border)' }} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
-              <div style={{ 
-                width: 64, height: 64, borderRadius: '4px', 
-                background: `rgba(${color === 'var(--red)' ? '239, 68, 68' : color === 'var(--amber)' ? '245, 158, 11' : '16, 185, 129'}, 0.15)`,
-                border: `1px solid ${color}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '1.5rem', fontWeight: 700, color: color 
+          <div className="animate-in" style={{ borderTop: '1px solid var(--hud-border)', paddingTop: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
+              <div style={{
+                width: 72, height: 72, borderRadius: 14,
+                background: bgDim, border: `1px solid ${color}`,
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
               }}>
-                {result.risk_score?.toFixed(0)}
+                <span style={{ fontSize: '1.8rem', fontWeight: 900, color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
+                  {result.risk_score?.toFixed(0)}
+                </span>
               </div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: '1rem', color: color }}>
+                <div style={{ fontSize: '0.62rem', fontWeight: 800, color, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
                   {tier === 'high' ? 'CRITICAL RISK' : tier === 'medium' ? 'MODERATE RISK' : 'LOW RISK'}
                 </div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)', marginBottom: 4 }}>
+                  {tier === 'high' ? 'Do Not Visit This URL' : tier === 'medium' ? 'Proceed With Caution' : 'Appears Safe'}
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                   Confidence: {Math.round((result.confidence || 0) * 100)}%
-                  {result.flag_for_review && ' · Flagged for review'}
+                  {result.flag_for_review && <span style={{ color: 'var(--warn)', marginLeft: 8 }}>· Flagged</span>}
                 </div>
               </div>
             </div>
 
             {result.top_signals?.length > 0 && (
               <div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 8, fontWeight: 600 }}>TOP SIGNALS</div>
+                <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Threat Signals Detected</div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   {result.top_signals.map((s, i) => (
-                    <span key={i} className="status-pill status-open">{s.replace(/_/g, ' ')}</span>
+                    <span key={i} className="status-stamp" style={{ border: `1px solid ${color}` }}>
+                      {s.replace(/_/g, ' ')}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -174,11 +180,8 @@ function PhishingScanner() {
 
 function SocialScannerPage() {
   const [profileData, setProfileData] = useState({
-    phone_visible: false,
-    address_or_location_tagged: false,
-    school_or_workplace_visible: false,
-    friends_list_public: false,
-    photo_reverse_search_hits: 0,
+    phone_visible: false, address_or_location_tagged: false,
+    school_or_workplace_visible: false, friends_list_public: false, photo_reverse_search_hits: 0,
   });
   const [result, setResult]   = useState(null);
   const [loading, setLoading] = useState(false);
@@ -193,11 +196,10 @@ function SocialScannerPage() {
       });
       setResult(await res.json());
     } catch {
-      const score = (profileData.phone_visible ? 25 : 0) +
-                    (profileData.address_or_location_tagged ? 30 : 0) +
-                    (profileData.school_or_workplace_visible ? 15 : 0) +
-                    (profileData.friends_list_public ? 10 : 0);
-      setResult({ privacy_exposure_score: score, findings: [], recommendations: ['Enable privacy settings'] });
+      const score = (profileData.phone_visible ? 25 : 0) + (profileData.address_or_location_tagged ? 30 : 0) +
+                    (profileData.school_or_workplace_visible ? 15 : 0) + (profileData.friends_list_public ? 10 : 0) +
+                    (profileData.photo_reverse_search_hits * 2);
+      setResult({ privacy_exposure_score: Math.min(score, 100), recommendations: ['Enable strict privacy settings on all platforms', 'Remove location tags from public posts', 'Set profile to private'] });
     } finally {
       setLoading(false);
     }
@@ -205,93 +207,115 @@ function SocialScannerPage() {
 
   const score = result?.privacy_exposure_score || 0;
   const tier  = score >= 60 ? 'high' : score >= 30 ? 'medium' : 'low';
-  const color = tier === 'high' ? 'var(--red)' : tier === 'medium' ? 'var(--amber)' : 'var(--green)';
+  const color = tier === 'high' ? 'var(--critical)' : tier === 'medium' ? 'var(--warn)' : 'var(--safe)';
+
+  const checks = [
+    { key: 'phone_visible',              label: 'Phone number is public' },
+    { key: 'address_or_location_tagged', label: 'Location or address tagged' },
+    { key: 'school_or_workplace_visible', label: 'Workplace or school visible' },
+    { key: 'friends_list_public',        label: 'Friends list is public' },
+  ];
 
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-        <UserSearch size={24} color="var(--blue)" />
-        <h1 style={{ margin: 0 }}>Social Media Exposure Scanner</h1>
+    <div className="hud-panel animate-in" style={{ position: 'absolute', top: 24, right: 24, bottom: 90, width: 440, display: 'flex', flexDirection: 'column' }}>
+      <div className="hud-panel-header">
+        <div className="hud-panel-title"><UserSearch size={14} /> Social Exposure Scan</div>
       </div>
-      <p style={{ marginBottom: 24, color: 'var(--text-secondary)' }}>Opt-in scan of a public profile for privacy exposure risks.</p>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, maxWidth: 800 }}>
-        <div className="card">
-          <h3 style={{ marginBottom: 16, fontSize: '0.9rem' }}>Profile Exposure Checklist</h3>
-          {[
-            { key: 'phone_visible',             label: 'Phone number public?' },
-            { key: 'address_or_location_tagged', label: 'Location/address tagged?' },
-            { key: 'school_or_workplace_visible', label: 'Workplace/school visible?' },
-            { key: 'friends_list_public',        label: 'Friends list public?' },
-          ].map((item) => (
-            <label key={item.key} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              <input
-                type="checkbox"
-                id={`social-${item.key}`}
-                checked={profileData[item.key]}
-                onChange={(e) => setProfileData((p) => ({ ...p, [item.key]: e.target.checked }))}
-                style={{ accentColor: 'var(--blue)', width: 16, height: 16 }}
-              />
-              {item.label}
-            </label>
-          ))}
-          <div className="form-group" style={{ marginTop: 8, marginBottom: 0 }}>
-            <label className="form-label" htmlFor="reverse-search-hits">Photo reverse-search hits (0-10)</label>
-            <input
-              id="reverse-search-hits"
-              type="number"
-              className="form-input"
-              min={0} max={10}
-              value={profileData.photo_reverse_search_hits}
-              onChange={(e) => setProfileData((p) => ({ ...p, photo_reverse_search_hits: parseInt(e.target.value) || 0 }))}
-            />
-          </div>
-          <button id="social-scan-btn" className="btn btn-primary mt-4" style={{ marginTop: 16, width: '100%' }} onClick={scan} disabled={loading}>
-            {loading ? <span className="spinner" /> : <><Activity size={16} /> Run Exposure Scan</>}
-          </button>
-        </div>
+      
+      <div style={{ padding: 24, flex: 1, overflowY: 'auto' }}>
+        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: 20 }}>
+          Analyse a public profile for privacy exposure risks and vulnerabilities.
+        </p>
 
-        <div className="card">
-          {result ? (
-            <>
-              <h3 style={{ marginBottom: 16, fontSize: '0.9rem' }}>Exposure Score</h3>
-              <div style={{ textAlign: 'center', marginBottom: 20 }}>
-                <div style={{ fontSize: '3rem', fontWeight: 800, color: color, fontFamily: 'var(--font-mono)' }}>
-                  {score}<span style={{ fontSize: '1rem', fontWeight: 400, color: 'var(--text-muted)' }}>/100</span>
-                </div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                  {tier === 'high' ? 'HIGH EXPOSURE RISK' : tier === 'medium' ? 'MODERATE RISK' : 'LOW EXPOSURE'}
-                </div>
-              </div>
-              {result.recommendations?.length > 0 && (
-                <div>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8 }}>RECOMMENDATIONS</div>
-                  {result.recommendations.map((r, i) => (
-                    <div key={i} style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', padding: '6px 0', borderBottom: '1px solid var(--border)' }}>
-                      {r}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>
-              <UserSearch size={48} style={{ opacity: 0.2, marginBottom: 16 }} />
-              <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>Awaiting Scan</div>
-            </div>
-          )}
+        {checks.map((item) => (
+          <label key={item.key} style={{
+            display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, cursor: 'pointer',
+            padding: '12px 14px', borderRadius: 8, background: profileData[item.key] ? 'var(--critical-dim)' : 'rgba(0,0,0,0.2)',
+            border: `1px solid ${profileData[item.key] ? 'rgba(239, 68, 68, 0.4)' : 'var(--hud-border)'}`,
+            transition: 'all 0.15s',
+          }}>
+            <input type="checkbox" checked={profileData[item.key]} onChange={(e) => setProfileData((p) => ({ ...p, [item.key]: e.target.checked }))} style={{ accentColor: 'var(--critical)', width: 16, height: 16 }} />
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: profileData[item.key] ? 'var(--critical)' : 'var(--text-secondary)' }}>{item.label}</span>
+          </label>
+        ))}
+        
+        <div style={{ marginTop: 12, marginBottom: 20 }}>
+          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 8 }}>Photo reverse-search hits (0–10)</label>
+          <input type="number" className="hud-input" min={0} max={10} value={profileData.photo_reverse_search_hits} onChange={(e) => setProfileData((p) => ({ ...p, photo_reverse_search_hits: parseInt(e.target.value) || 0 }))} />
         </div>
+        
+        <button className="hud-btn hud-btn-primary" style={{ width: '100%' }} onClick={scan} disabled={loading}>
+          {loading ? <span className="spinner" /> : <><Activity size={15} /> Run Analysis</>}
+        </button>
+
+        {result && (
+          <div className="animate-in" style={{ borderTop: '1px solid var(--hud-border)', paddingTop: 24, marginTop: 24 }}>
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <div style={{ fontSize: '4rem', fontWeight: 900, color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>{score}</div>
+              <div style={{ fontSize: '0.68rem', color, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 8 }}>
+                {tier === 'high' ? 'HIGH EXPOSURE RISK' : tier === 'medium' ? 'MODERATE RISK' : 'LOW EXPOSURE'}
+              </div>
+            </div>
+            {result.recommendations?.length > 0 && (
+              <div>
+                <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Recommendations</div>
+                {result.recommendations.map((r, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 10, padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    <span style={{ color: 'var(--accent)', fontWeight: 800 }}>→</span> {r}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function AppLayout({ children }) {
+
+// ── MAIN LAYOUT ───────────────────────────────────────────────
+
+function HUDLayout({ children }) {
+  const [stats, setStats] = useState({ open: 0, high: 0, resolved: 0, total: 0 });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const [open, high] = await Promise.all([
+          api.police.listIncidents({ status: 'open', page_size: 1 }),
+          api.police.listIncidents({ min_severity: 70, page_size: 1 }),
+        ]);
+        setStats({ open: open?.total||0, high: high?.total||0 });
+      } catch {}
+    };
+    fetchStats();
+    const iv = setInterval(fetchStats, 60000);
+    return () => clearInterval(iv);
+  }, []);
+
   return (
-    <div className="app-layout">
-      <Topbar />
-      <Sidebar />
-      <main className="app-main">{children}</main>
-    </div>
+    <>
+      {/* 1. Base Layer: Absolute Full-Screen Live Map */}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0 }}>
+        {/* We use a modified version of LiveMap that has no HUD-clashing styling */}
+        <LiveMap showHeatmap />
+      </div>
+      
+      {/* 2. HUD Container: Pointer-events none by default */}
+      <div className="hud-container">
+        
+        {/* Top-Left: Floating Metrics Panel */}
+        <HUDMetrics stats={stats} />
+        
+        {/* Main Routed Area: Renders the active panel (Dashboard, Scanner, etc) */}
+        {/* The router outlet will position its own panels via absolute positioning to float over the map */}
+        {children}
+        
+        {/* Bottom-Center: Floating Dock */}
+        <HUDNavigation />
+      </div>
+    </>
   );
 }
 
@@ -304,16 +328,15 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/*" element={
             <ProtectedRoute>
-              <AppLayout>
+              <HUDLayout>
                 <Routes>
                   <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route path="/incidents" element={<DashboardPage />} />
-                  <Route path="/map"       element={<DashboardPage />} />
+                  <Route path="/incidents" element={<DashboardPage activeTabOverride="incidents" />} />
                   <Route path="/phishing"  element={<PhishingScanner />} />
                   <Route path="/social"    element={<SocialScannerPage />} />
                   <Route path="*"          element={<Navigate to="/dashboard" replace />} />
                 </Routes>
-              </AppLayout>
+              </HUDLayout>
             </ProtectedRoute>
           } />
         </Routes>

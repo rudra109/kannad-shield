@@ -14,6 +14,10 @@ function authHeader() {
 }
 
 async function request(url, options = {}) {
+  // Auth requests must throw real errors so the login page can show them.
+  // Non-auth requests silently fall back to mock data so the dashboard still works.
+  const isAuthRequest = url.includes('/auth/');
+
   try {
     const res = await fetch(url, {
       ...options,
@@ -23,24 +27,18 @@ async function request(url, options = {}) {
         ...options.headers,
       },
     });
-    if (res.status === 401) {
-      localStorage.removeItem('police_jwt');
-      window.location.href = '/login';
-      return;
-    }
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: res.statusText }));
       throw new Error(err.detail || err.error || `HTTP ${res.status}`);
     }
     return await res.json();
   } catch (err) {
-    console.warn(`[API Fallback] Request to ${url} failed, returning mock data. Error: ${err.message}`);
-    // Mock Data Fallbacks for Demo Mode
-    if (url.includes('/auth/login')) {
-      return { access_token: 'mock-jwt-token', refresh_token: 'mock-refresh-token', mfa_required: false };
-    }
+    if (isAuthRequest) throw err; // propagate to login form
+
+    console.warn(`[API Fallback] ${url} → ${err.message}`);
+
+    // ── Mock Data Fallbacks ───────────────────────────────────────
     if (url.includes('/police/incidents') && !url.includes('/status') && !url.includes('case-links')) {
-      // Check if it has an ID path segment (e.g. /police/incidents/inc-1234)
       const isList = url.endsWith('/police/incidents') || url.includes('/police/incidents?');
       if (isList) {
         return {
@@ -48,14 +46,14 @@ async function request(url, options = {}) {
           incidents: [
             { id: 'inc-1234', category: 'phishing', incident_type: 'financial_fraud', severity: 85, status: 'open', description: 'User received a fake bank SMS with a malicious link.', created_at: new Date().toISOString(), ai_flags: [{ module: 'phishing', score: 92, flag_for_review: true }] },
             { id: 'inc-5678', category: 'stalking', incident_type: 'physical_threat', severity: 72, status: 'under_review', description: 'Stalking complaint via SOS app.', created_at: new Date(Date.now() - 3600000).toISOString(), ai_flags: [] },
-            { id: 'inc-9012', category: 'fake_profile', incident_type: 'impersonation', severity: 45, status: 'resolved', description: 'Fake instagram profile reported.', created_at: new Date(Date.now() - 86400000).toISOString(), ai_flags: [{ module: 'social', score: 60, flag_for_review: false }] }
-          ]
+            { id: 'inc-9012', category: 'fake_profile', incident_type: 'impersonation', severity: 45, status: 'resolved', description: 'Fake instagram profile reported.', created_at: new Date(Date.now() - 86400000).toISOString(), ai_flags: [{ module: 'social', score: 60, flag_for_review: false }] },
+          ],
         };
       } else {
         return {
           incident: { id: 'inc-1234', category: 'phishing', incident_type: 'financial_fraud', severity: 85, status: 'open', description: 'User received a fake bank SMS with a malicious link.', created_at: new Date().toISOString(), lat: 23.0225, lng: 72.5714 },
           ai_scores: [{ module: 'phishing', risk_score: 92, confidence: 0.95, flag_for_review: true, details: { top_signals: ['suspicious_tld', 'redirect_chain'] } }],
-          evidence: []
+          evidence: [],
         };
       }
     }
@@ -74,10 +72,11 @@ async function request(url, options = {}) {
     if (url.includes('/evidence/')) {
       return [{ file_ref: 'screenshot.png', file_hash: 'a1b2c3d4e5f6', prev_hash: '000000000000', chain_hash: 'f6e5d4c3b2a1', timestamp: new Date().toISOString() }];
     }
-    
+
     return {};
   }
 }
+
 
 // ── Auth ──────────────────────────────────────────────────────
 export const api = {
