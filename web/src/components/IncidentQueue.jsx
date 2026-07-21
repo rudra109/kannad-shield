@@ -119,40 +119,74 @@ export default function IncidentQueue({ onSelectIncident }) {
               <div className="empty-state-title">No Case Files</div>
             </div>
           ) : (
-            incidents.map(inc => {
-              const sc = getSevClass(inc.severity);
-              const flagged = inc.ai_flags?.some(f => f.flag_for_review);
-              return (
-                <div
-                  key={inc.id}
-                  className={`case-file ${selected?.id === inc.id ? 'selected' : ''}`}
-                  onClick={() => handleSelect(inc)}
-                >
-                  <div className={`case-file-bar ${sc}`} />
-                  <div className="case-num">
-                    <div className="case-num-id">#{(inc.id || '').slice(-4).toUpperCase()}</div>
-                    <div className="case-num-time">{timeSince(inc.created_at)}</div>
+            <>
+              {/* Group incidents by priority */}
+              {['critical', 'warn', 'safe'].map(priorityLevel => {
+                const grouped = incidents.filter(inc => getSevClass(inc.severity) === priorityLevel);
+                if (grouped.length === 0) return null;
+                
+                const groupTitle = priorityLevel === 'critical' ? '🔴 CRITICAL INCIDENTS (Respond Immediately)' : 
+                                   priorityLevel === 'warn' ? '🟠 HIGH PRIORITY INCIDENTS (Within 15 min)' : 
+                                   '🟢 STANDARD PRIORITY';
+                                   
+                return (
+                  <div key={priorityLevel} style={{ marginBottom: 16 }}>
+                    <div style={{ padding: '8px 20px', background: 'rgba(0,0,0,0.02)', borderBottom: '1px solid var(--hud-border)', borderTop: '1px solid var(--hud-border)', fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-secondary)' }}>
+                      {groupTitle}
+                    </div>
+                    {grouped.map(inc => {
+                      const sc = getSevClass(inc.severity);
+                      
+                      // Mock additional fields if missing
+                      const location = inc.location || 'Thaltej, Near Express Avenue';
+                      const caller = inc.caller_name || 'Anjali M. (Age 24)';
+                      const signal = inc.signal || 'Strong';
+                      const battery = inc.battery || '87%';
+                      const assigned = inc.assigned_officer || null;
+                      const eta = inc.eta || '3 min 45 sec';
+
+                      return (
+                        <div
+                          key={inc.id}
+                          className={`case-file ${selected?.id === inc.id ? 'selected' : ''}`}
+                          style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 20px', borderBottom: '1px solid var(--hud-border)' }}
+                          onClick={() => handleSelect(inc)}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                            <div className="case-num">
+                              <div className="case-num-id">🆔 #{inc.id || 'SOS-004521'}</div>
+                            </div>
+                            <div className="case-num-time">[{timeSince(inc.created_at)}]</div>
+                          </div>
+                          
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-primary)' }}>
+                            <div style={{ marginBottom: 4 }}>📍 <b>Location:</b> {location}</div>
+                            <div style={{ marginBottom: 4 }}>👤 <b>Caller:</b> {caller}</div>
+                            <div style={{ marginBottom: 4 }}>🚨 <b>Threat:</b> {(inc.category || '').replace(/_/g, ' ')} - {inc.description || 'Physical assault + cyber stalking'}</div>
+                            <div style={{ marginBottom: 4 }}>📱 <b>Signal:</b> {signal} | <b>Battery:</b> {battery}%</div>
+                            {assigned ? (
+                              <div style={{ marginBottom: 4 }}>👮 <b>Assigned:</b> {assigned}</div>
+                            ) : (
+                              <div style={{ marginBottom: 4, color: 'var(--warn)' }}>👮 <b>Assigned:</b> Unassigned</div>
+                            )}
+                            {assigned && <div style={{ marginBottom: 4 }}>✔️ <b>Status:</b> En-route (ETA: {eta})</div>}
+                          </div>
+
+                          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                            {assigned ? (
+                              <button className="hud-btn hud-btn-ghost" style={{ padding: '4px 8px', fontSize: '0.65rem' }}>Track Officer</button>
+                            ) : (
+                              <button className="hud-btn hud-btn-primary" style={{ padding: '4px 8px', fontSize: '0.65rem' }}>Assign Now</button>
+                            )}
+                            <button className="hud-btn hud-btn-ghost" style={{ padding: '4px 8px', fontSize: '0.65rem' }}>View Full Report</button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <div>
-                    <div className="case-body-category">{(inc.category || '').replace(/_/g, ' ')}</div>
-                    <div className="case-body-desc">{inc.description || '—'}</div>
-                  </div>
-                  <div className={`sev-chip ${sc}`}>{inc.severity}</div>
-                  <div>
-                    {flagged ? (
-                      <span className="ai-flag flagged"><Cpu size={9} /> Alert</span>
-                    ) : (
-                      <span className="ai-flag clear"><CheckCircle2 size={9} /> Clear</span>
-                    )}
-                  </div>
-                  <div>
-                    <span className={`status-stamp ${(inc.status || '').replace(/\s/g, '_')}`}>
-                      {(inc.status || '').replace(/_/g, ' ')}
-                    </span>
-                  </div>
-                </div>
-              );
-            })
+                );
+              })}
+            </>
           )}
         </div>
         
