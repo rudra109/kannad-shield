@@ -290,7 +290,12 @@ async def list_incidents(
     idx     = 2
 
     if status:
-        filters.append(f"status = ${idx}"); params.append(status); idx += 1
+        status_list = [s.strip() for s in status.split(",")]
+        # Create a list of bind parameters like $2, $3, $4
+        bind_params = [f"${idx + i}" for i in range(len(status_list))]
+        filters.append(f"status IN ({', '.join(bind_params)})")
+        params.extend(status_list)
+        idx += len(status_list)
     if incident_type:
         filters.append(f"incident_type = ${idx}"); params.append(incident_type); idx += 1
 

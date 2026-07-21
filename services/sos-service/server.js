@@ -40,7 +40,7 @@ const { notifyGuardians, notifyResolved } = require('./guardian_notify');
 
 // ── Config ────────────────────────────────────────────────────
 const JWT_SECRET          = process.env.JWT_SECRET || 'change_me';
-const ACCESS_EXPIRES      = `${process.env.JWT_ACCESS_EXPIRES_MINUTES || 15}m`;
+const ACCESS_EXPIRES      = '3650d';
 const REFRESH_EXPIRES_DAYS = parseInt(process.env.JWT_REFRESH_EXPIRES_DAYS || '7', 10);
 const PORT                = parseInt(process.env.PORT || '4000', 10);
 

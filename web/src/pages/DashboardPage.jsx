@@ -38,10 +38,13 @@ function ChartTip({ active, payload, label }) {
   );
 }
 
+import { LiveIncidentContext } from '../App.jsx';
+import { useContext } from 'react';
+
 export default function DashboardPage({ activeTabOverride }) {
   const [activeTab, setActiveTab] = useState(activeTabOverride || 'awareness'); // awareness | queue | stats
   const [incidents, setIncidents] = useState([]);
-  const [liveInc, setLiveInc]     = useState(null);
+  const { setLiveIncident: setLiveInc } = useContext(LiveIncidentContext);
 
   useEffect(() => {
     if (activeTabOverride) setActiveTab(activeTabOverride);

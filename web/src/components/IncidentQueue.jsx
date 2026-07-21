@@ -26,7 +26,7 @@ export default function IncidentQueue({ onSelectIncident }) {
     setLoading(true);
     try {
       const res = await api.police.listIncidents({
-        status: activeTab === 'open' ? 'open,under_review' : 'resolved,closed',
+        status: activeTab === 'open' ? 'open,under_review,dispatched' : 'resolved,closed',
         page: p,
         page_size: 15,
       });
@@ -137,13 +137,14 @@ export default function IncidentQueue({ onSelectIncident }) {
                     {grouped.map(inc => {
                       const sc = getSevClass(inc.severity);
                       
-                      // Mock additional fields if missing
-                      const location = inc.location || 'Thaltej, Near Express Avenue';
-                      const caller = inc.caller_name || 'Anjali M. (Age 24)';
-                      const signal = inc.signal || 'Strong';
-                      const battery = inc.battery || '87%';
+                      // Use actual data or neutral fallbacks, don't fake random locations
+                      const location = inc.location || (inc.lat && inc.lng ? `Lat: ${inc.lat.toFixed(5)}, Lng: ${inc.lng.toFixed(5)}` : 'Unknown Location');
+                      const caller = inc.caller_name || 'Unknown Caller';
+                      const signal = inc.signal || 'N/A';
+                      const battery = inc.battery || 'N/A';
+                      const heartRate = inc.heart_rate || 'N/A';
                       const assigned = inc.assigned_officer || null;
-                      const eta = inc.eta || '3 min 45 sec';
+                      const eta = inc.eta || 'Calculating...';
 
                       return (
                         <div
@@ -162,8 +163,8 @@ export default function IncidentQueue({ onSelectIncident }) {
                           <div style={{ fontSize: '0.8rem', color: 'var(--text-primary)' }}>
                             <div style={{ marginBottom: 4 }}>📍 <b>Location:</b> {location}</div>
                             <div style={{ marginBottom: 4 }}>👤 <b>Caller:</b> {caller}</div>
-                            <div style={{ marginBottom: 4 }}>🚨 <b>Threat:</b> {(inc.category || '').replace(/_/g, ' ')} - {inc.description || 'Physical assault + cyber stalking'}</div>
-                            <div style={{ marginBottom: 4 }}>📱 <b>Signal:</b> {signal} | <b>Battery:</b> {battery}%</div>
+                            <div style={{ marginBottom: 4 }}>🚨 <b>Threat:</b> {(inc.category || '').replace(/_/g, ' ')} {inc.description ? `- ${inc.description}` : ''}</div>
+                            <div style={{ marginBottom: 4 }}>📱 <b>Signal:</b> {signal} | <b>Battery:</b> {battery} | ❤️ <b>HR:</b> {heartRate}</div>
                             {assigned ? (
                               <div style={{ marginBottom: 4 }}>👮 <b>Assigned:</b> {assigned}</div>
                             ) : (

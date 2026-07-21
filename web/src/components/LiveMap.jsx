@@ -9,6 +9,7 @@
 // =============================================================
 import { useEffect, useState, useRef } from 'react';
 import api from '../services/api.js';
+import { useIncidentWebSocket } from '../hooks/useWebSocket.js';
 import {
   MapContainer, TileLayer, CircleMarker, Popup,
   useMap, Polygon, Tooltip
@@ -124,9 +125,18 @@ function predictedColor(score) {
 
 function MapRecenter({ center }) {
   const map = useMap();
+  const hasCentered = useRef(false);
   useEffect(() => {
-    if (center) map.flyTo(center, 14, { duration: 1.2 });
+    if (center && !hasCentered.current) {
+      map.flyTo(center, 14, { duration: 1.2 });
+      hasCentered.current = true;
+    }
   }, [center, map]);
+  
+  // Reset when center completely changes (different incident)
+  useEffect(() => {
+    hasCentered.current = false;
+  }, [center?.[0], center?.[1]]);
   return null;
 }
 
@@ -184,6 +194,7 @@ export default function LiveMap({ liveIncident = null, showHeatmap = true, onRed
   const [buckets, setBuckets]     = useState([]);
   const [incidents, setIncidents] = useState([]);
   const [livePos, setLivePos]     = useState(null);
+  const [liveData, setLiveData]   = useState(null);
   const [selectedGirl, setSelectedGirl] = useState(null);
   const [showPredictive, setShowPredictive] = useState(true);
   const [showGirls, setShowGirls] = useState(true);
@@ -217,8 +228,19 @@ export default function LiveMap({ liveIncident = null, showHeatmap = true, onRed
   useEffect(() => {
     if (liveIncident?.lat && liveIncident?.lng) {
       setLivePos([liveIncident.lat, liveIncident.lng]);
+      setLiveData(liveIncident);
+    } else {
+      setLivePos(null);
+      setLiveData(null);
     }
   }, [liveIncident]);
+
+  useIncidentWebSocket(liveIncident?.id, (msg) => {
+    if (msg.type === 'location_update') {
+      setLivePos([msg.lat, msg.lng]);
+      setLiveData(prev => ({ ...prev, ...msg }));
+    }
+  });
 
   // Hardcoded fallback heatmap buckets for Ahmedabad (since backend returns only 1)
   const FALLBACK_BUCKETS = [
@@ -428,10 +450,15 @@ export default function LiveMap({ liveIncident = null, showHeatmap = true, onRed
             <Popup>
               <div style={{ padding: 4, fontFamily: 'sans-serif' }}>
                 <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#2563EB', marginBottom: 4 }}>🚨 LIVE SOS TRACKING</div>
-                <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>{liveIncident?.category?.replace(/_/g, ' ')}</div>
-                {liveIncident?.health_data?.heart_rate && (
+                <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>{(liveData?.category || liveIncident?.category || '').replace(/_/g, ' ')}</div>
+                {liveData?.health_data?.heart_rate != null && (
                   <div style={{ fontSize: '0.8rem', color: '#EF4444', fontWeight: 700, marginTop: 6 }}>
-                    ❤️ HR: {liveIncident.health_data.heart_rate} bpm
+                    ❤️ HR: {liveData.health_data.heart_rate} bpm
+                  </div>
+                )}
+                {liveData?.health_data?.spo2 != null && (
+                  <div style={{ fontSize: '0.8rem', color: '#3B82F6', fontWeight: 700, marginTop: 2 }}>
+                    🩸 SpO2: {liveData.health_data.spo2}%
                   </div>
                 )}
               </div>

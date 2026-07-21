@@ -1,7 +1,7 @@
 // =============================================================
 //  App — Sentinel HUD Layout Controller
 // =============================================================
-import { useState, useEffect } from 'react';
+import { useState, useEffect, createContext } from 'react';
 import { BrowserRouter, Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom';
 import { ShieldAlert, LayoutDashboard, ListFilter, FileSearch, LogOut, Search, Activity, UserSearch, Lock, TrendingUp, AlertOctagon, FileText, Radio, Layers, BarChart2, Bell, Microscope, BookOpen } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext.jsx';
@@ -22,6 +22,8 @@ import TrainingPage from './pages/TrainingPage.jsx';
 import LiveMap from './components/LiveMap.jsx';
 import RedZonePanel from './components/RedZonePanel.jsx';
 import api from './services/api.js';
+
+export const LiveIncidentContext = createContext(null);
 
 function ProtectedRoute({ children }) {
   const { officer } = useAuth();
@@ -337,6 +339,7 @@ function SocialScannerPage() {
 // ── MAIN LAYOUT ───────────────────────────────────────────────
 
 function HUDLayout({ children }) {
+  const [liveIncident, setLiveIncident] = useState(null);
   const [stats, setStats] = useState({ 
     open: 10, high: 9, resolved: 4, escalated: 3, 
     reports: 245, evidence: 156, avg_resp_time: '4m 32s', convict_rate: '78%' 
@@ -358,10 +361,10 @@ function HUDLayout({ children }) {
   }, []);
 
   return (
-    <>
+    <LiveIncidentContext.Provider value={{ liveIncident, setLiveIncident }}>
       {/* 1. Base Layer: Absolute Full-Screen Live Map */}
       <div style={{ position: 'fixed', inset: 0, zIndex: 0 }}>
-        <LiveMap showHeatmap />
+        <LiveMap showHeatmap liveIncident={liveIncident} />
       </div>
       
       {/* 2. HUD Container: Pointer-events none by default */}
@@ -381,7 +384,7 @@ function HUDLayout({ children }) {
         {/* Bottom-Center: Floating Dock */}
         <HUDNavigation />
       </div>
-    </>
+    </LiveIncidentContext.Provider>
   );
 }
 
