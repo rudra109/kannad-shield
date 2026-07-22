@@ -29,6 +29,7 @@ from modules.facial_service import router as facial_router
 from modules.heatmap_service import router as heatmap_router
 from modules.entity_service import router as entity_router
 from modules.fir_service import router as fir_router
+from modules.arima_service import router as arima_router
 
 app = FastAPI(
     title="Cyber Safety Platform — AI/ML Threat Engine",
@@ -57,6 +58,7 @@ app.include_router(deepfake_router, prefix="/api/ai/deepfake", tags=["Deepfake /
 app.include_router(social_router, prefix="/api/ai/social", tags=["Social Exposure Scanner"])
 app.include_router(facial_router, prefix="/api/ai/facial", tags=["Facial Recognition (Police-Only)"])
 app.include_router(heatmap_router, prefix="/api/ai/heatmap", tags=["Predictive Heat-Map"])
+app.include_router(arima_router, prefix="/api/ai/arima", tags=["ARIMA Pattern Forecasting"])
 app.include_router(entity_router, prefix="/api/ai/entity", tags=["Entity Resolution"])
 app.include_router(fir_router, prefix="/api/ai/fir", tags=["FIR Drafting"])
 

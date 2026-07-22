@@ -16,6 +16,7 @@ import random
 import argparse
 import numpy as np
 import pandas as pd
+from datetime import datetime, timedelta
 
 random.seed(42)
 np.random.seed(42)
@@ -180,6 +181,31 @@ def create_incidents_geo_csv(n=600):
 
 
 # ---------------------------------------------------------------------------
+# 3.5. Daily Incidents Data (For ARIMA Pattern Analysis)
+# ---------------------------------------------------------------------------
+def create_daily_incidents_csv(days=90):
+    """Generates 90 days of simulated cybercrime incident counts."""
+    base_date = datetime.now() - timedelta(days=days)
+    rows = []
+    base_count = 15  # baseline daily incidents
+    for i in range(days):
+        current_date = base_date + timedelta(days=i)
+        # Add a slight upward trend and weekend bumps
+        trend = i * 0.1
+        weekend_bump = 5 if current_date.weekday() >= 5 else 0
+        noise = random.randint(-5, 5)
+        
+        count = max(0, int(base_count + trend + weekend_bump + noise))
+        rows.append({
+            "date": current_date.strftime("%Y-%m-%d"),
+            "incidents": count
+        })
+    df = pd.DataFrame(rows)
+    df.to_csv("data/daily_incidents.csv", index=False)
+    print(f"[seed] daily_incidents.csv -> {len(df)} rows")
+
+
+# ---------------------------------------------------------------------------
 # 4. (Optional) Build facial recognition FAISS index from demo images
 # ---------------------------------------------------------------------------
 def build_facial_index():
@@ -227,6 +253,7 @@ if __name__ == "__main__":
     create_phishing_csv()
     create_fake_profiles_csv()
     create_incidents_geo_csv()
+    create_daily_incidents_csv()
 
     if args.index:
         build_facial_index()

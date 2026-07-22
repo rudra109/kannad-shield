@@ -8,6 +8,7 @@ import {
   Brain, TrendingUp, Activity, ShieldAlert, Bell, ChevronDown, ChevronUp, Clock
 } from 'lucide-react';
 import { GIRL_LOCATIONS, RED_ZONES, PREDICTED_ZONES } from './LiveMap.jsx';
+import { AreaChart, Area, ResponsiveContainer, YAxis, Tooltip } from 'recharts';
 
 // ── ARIMA Time-Series Model (Frontend Implementation) ───────────
 // Simulates an ARIMA(1,1,1) model for forecasting crime hotspots based on
@@ -167,6 +168,9 @@ function AIZoneCard({ zone, prediction }) {
   const alertColor = prediction.alertLevel === 'CRITICAL' ? '#DC2626' : prediction.alertLevel === 'HIGH' ? '#D97706' : '#7C3AED';
   const alertBg    = prediction.alertLevel === 'CRITICAL' ? 'rgba(220,38,38,0.08)' : prediction.alertLevel === 'HIGH' ? 'rgba(217,119,6,0.08)' : 'rgba(124,58,237,0.08)';
 
+  const chartData = prediction.ts.map((val, i) => ({ day: `Day ${i + 1}`, value: val }));
+  chartData.push({ day: 'Predicted', value: prediction.predictedScore });
+
   return (
     <div style={{ background: alertBg, border: `1px solid ${alertColor}30`, borderRadius: 10, marginBottom: 8, overflow: 'hidden' }}>
       <div style={{ padding: '10px 12px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => setOpen(!open)}>
@@ -188,6 +192,25 @@ function AIZoneCard({ zone, prediction }) {
       </div>
       {open && (
         <div style={{ padding: '0 12px 12px', borderTop: `1px solid ${alertColor}15` }}>
+          <div style={{ height: 70, marginTop: 12, marginBottom: 8 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id={`grad-${zone.id}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={alertColor} stopOpacity={0.4} />
+                    <stop offset="95%" stopColor={alertColor} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <YAxis hide domain={['dataMin - 10', 'dataMax + 10']} />
+                <Tooltip 
+                  contentStyle={{ background: 'var(--hud-panel)', border: '1px solid var(--hud-border)', borderRadius: 8, fontSize: '0.7rem', padding: '4px 8px' }}
+                  itemStyle={{ color: alertColor, fontWeight: 700 }}
+                  labelStyle={{ color: 'var(--text-secondary)', marginBottom: 2 }}
+                />
+                <Area type="monotone" dataKey="value" stroke={alertColor} strokeWidth={2} fill={`url(#grad-${zone.id})`} isAnimationActive={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginTop: 10 }}>
             {[
               { l: 'ARIMA AR(φ)', v: prediction.arimaPhi },

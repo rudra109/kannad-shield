@@ -11,7 +11,7 @@ import { useEffect, useState, useRef } from 'react';
 import api from '../services/api.js';
 import { useIncidentWebSocket } from '../hooks/useWebSocket.js';
 import {
-  MapContainer, TileLayer, CircleMarker, Popup,
+  MapContainer, TileLayer, CircleMarker, Circle, Popup,
   useMap, Polygon, Tooltip
 } from 'react-leaflet';
 
@@ -359,10 +359,10 @@ export default function LiveMap({ liveIncident = null, showHeatmap = true, onRed
 
         {/* ── LAYER 2: Heatmap Circles (incident density) ── */}
         {showZones && allBuckets.map((b, i) => (
-          <CircleMarker
+          <Circle
             key={`hm-${i}`}
             center={[parseFloat(b.lat_bucket), parseFloat(b.lng_bucket)]}
-            radius={Math.max(20, Math.min(10 + b.count * 8, 60))}
+            radius={Math.max(700, Math.min(300 + b.count * 200, 2000))}
             pathOptions={{
               color: riskColor(b.severity_avg),
               fillColor: riskColor(b.severity_avg),
@@ -374,10 +374,10 @@ export default function LiveMap({ liveIncident = null, showHeatmap = true, onRed
 
         {/* ── LAYER 3: Predictive AI Heatmap ── */}
         {showPredictive && PREDICTED_ZONES.map(pz => (
-          <CircleMarker
+          <Circle
             key={pz.id}
             center={pz.center}
-            radius={Math.max(22, pz.predictedRisk * 0.4)}
+            radius={Math.max(750, pz.predictedRisk * 15)}
             pathOptions={{
               color: predictedColor(pz.predictedRisk),
               fillColor: predictedColor(pz.predictedRisk),
@@ -400,7 +400,7 @@ export default function LiveMap({ liveIncident = null, showHeatmap = true, onRed
                 </div>
               </div>
             </Popup>
-          </CircleMarker>
+          </Circle>
         ))}
 
         {/* ── LAYER 4: Open Incident Markers ── */}

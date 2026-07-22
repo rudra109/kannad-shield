@@ -85,6 +85,18 @@ _run("heatmap_model", train_heatmap)
 
 
 # ---------------------------------------------------------------------------
+# 3.5. ARIMA Pattern Forecasting Model
+# ---------------------------------------------------------------------------
+def train_arima():
+    from modules.arima_model import train
+    if not os.path.exists("data/daily_incidents.csv"):
+        raise FileNotFoundError("data/daily_incidents.csv not found — run seed_data.py first.")
+    train(csv_path="data/daily_incidents.csv", out_path="models/arima_forecast.joblib")
+
+_run("arima_forecast_model", train_arima)
+
+
+# ---------------------------------------------------------------------------
 # 4. NLP Model (verify via subprocess — avoids XGBoost->PyTorch DLL conflict on Windows)
 # ---------------------------------------------------------------------------
 def verify_nlp():

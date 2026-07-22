@@ -2,7 +2,7 @@
 //  Crime Pattern Analysis Page — Heatmaps, Trends, Coordination
 //  Phase 2.4 of POLICE_DASHBOARD_EXPANSION_ROADMAP
 // =============================================================
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, AreaChart, Area, CartesianGrid
@@ -76,6 +76,22 @@ function ChartTip({ active, payload, label }) {
 
 export default function CrimePatternPage() {
   const [dateRange, setDateRange] = useState('30d');
+  const [forecast, setForecast] = useState(null);
+
+  useEffect(() => {
+    fetch('/api/ai/arima/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ days: 7 })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (!data.detail) {
+          setForecast(data);
+        }
+      })
+      .catch(err => console.error("Forecast fetch error:", err));
+  }, []);
 
   const riskColor = (r) => r === 'critical' ? 'var(--critical)' : r === 'warn' ? 'var(--warn)' : 'var(--safe)';
   const riskBg = (r) => r === 'critical' ? 'var(--critical-dim)' : r === 'warn' ? 'var(--warn-dim)' : 'var(--safe-dim)';
@@ -242,12 +258,12 @@ export default function CrimePatternPage() {
         {/* Predictive Forecast */}
         <section style={{ background: 'rgba(37,99,235,0.05)', border: '1px solid rgba(37,99,235,0.15)', borderRadius: 10, padding: '14px 16px' }}>
           <div style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 10 }}>
-            📊 Predictive Forecast — Next 7 Days
+            📊 ARIMA Predictive Forecast — Next 7 Days
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             {[
-              { label: 'Expected Incidents', value: '145 ±12' },
-              { label: 'High-Risk Days', value: 'Nov 25–27' },
+              { label: 'Expected Incidents', value: forecast ? `${forecast.total_expected} (±5)` : 'Loading...' },
+              { label: 'High-Risk Days', value: forecast && forecast.high_risk_days.length > 0 ? forecast.high_risk_days.map(d => d.slice(5)).join(', ') : (forecast ? 'None' : 'Loading...') },
               { label: 'Patrol Increase Rec.', value: 'CG Road, Thaltej' },
               { label: 'Predicted New Hotspot', value: 'South Bopal' },
             ].map(f => (

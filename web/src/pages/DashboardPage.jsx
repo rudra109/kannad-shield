@@ -136,7 +136,7 @@ export default function DashboardPage({ activeTabOverride }) {
       )}
 
       {activeTab === 'queue' && (
-        <div className="hud-panel animate-in" style={{ position: 'absolute', top: 80, right: 24, bottom: 90, width: 850 }}>
+        <div className="hud-panel animate-in" style={{ position: 'absolute', top: 80, right: 24, bottom: 90, width: 440 }}>
           <IncidentQueue onSelectIncident={setLiveInc} />
         </div>
       )}

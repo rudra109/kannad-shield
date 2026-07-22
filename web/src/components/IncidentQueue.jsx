@@ -86,10 +86,10 @@ export default function IncidentQueue({ onSelectIncident }) {
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: selected ? '1fr 400px' : '1fr', gap: 0, alignItems: 'start', height: '100%', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       
       {/* ── QUEUE LIST ────────────────────────────────────── */}
-      <div style={{ padding: 0, overflowY: 'auto', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: 0, overflowY: 'auto', height: '100%', display: selected ? 'none' : 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--hud-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', gap: 8 }}>
             <button
@@ -202,7 +202,7 @@ export default function IncidentQueue({ onSelectIncident }) {
 
       {/* ── DETAIL PANEL ──────────────────────────────────── */}
       {selected && (
-        <div style={{ borderLeft: '1px solid var(--hud-border)', height: '100%', display: 'flex', flexDirection: 'column', background: 'rgba(0,0,0,0.2)' }}>
+        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'rgba(0,0,0,0.2)' }}>
           
           <div style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--hud-border)' }}>
             <div>
